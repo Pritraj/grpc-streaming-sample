@@ -1,0 +1,28 @@
+<div class="container">
+  <h1>{{ title }}</h1>
+
+  <div class="controls">
+    <button (click)="startJob()" [disabled]="isStreaming()">
+      {{ isStreaming() ? "Job Running..." : "Start New Job" }}
+    </button>
+  </div>
+
+  <div class="logs">
+    <h2>Job Updates</h2>
+    <div
+      *ngFor="let log of jobLogs()"
+      class="log-entry"
+      [ngClass]="log.status.toLowerCase()"
+    >
+      <div class="header">
+        <span class="job-id">{{ log.jobId | slice : 0 : 8 }}</span>
+        <span class="timestamp">{{ log.timestamp | date : "mediumTime" }}</span>
+        <span class="status">{{ log.status }}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="fill" [style.width.%]="log.progress"></div>
+      </div>
+      <div class="message">{{ log.message }}</div>
+    </div>
+  </div>
+</div>

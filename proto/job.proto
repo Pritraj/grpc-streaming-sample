@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package job;
+
+option java_multiple_files = true;
+option java_package = "com.example.grpc.job";
+option java_outer_classname = "JobProto";
+
+service JobService {
+  // Starts a long-running job and streams updates
+  rpc StartJob (JobRequest) returns (stream JobUpdate);
+  
+  // Streams updates for all active jobs
+  rpc WatchJobs (Empty) returns (stream JobUpdate);
+}
+
+message JobRequest {
+  string description = 1;
+  int32 duration_seconds = 2; // Simulated duration
+}
+
+message JobUpdate {
+  string job_id = 1;
+  string status = 2; // PENDING, RUNNING, COMPLETED, FAILED
+  int32 progress_percent = 3;
+  string message = 4;
+  int64 timestamp = 5;
+}
+
+message Empty {}
