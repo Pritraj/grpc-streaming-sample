@@ -12,6 +12,9 @@ public class JobServiceImpl extends JobServiceGrpc.JobServiceImplBase {
     private static final Logger logger = Logger.getLogger(JobServiceImpl.class.getName());
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
 
+    // Track active jobs to cancel them properly
+    private final ConcurrentHashMap<String, java.util.concurrent.ScheduledFuture<?>> activeJobs = new ConcurrentHashMap<>();
+
     @Override
     public void startJob(JobRequest request, StreamObserver<JobUpdate> responseObserver) {
         String jobId = UUID.randomUUID().toString();
@@ -33,35 +36,59 @@ public class JobServiceImpl extends JobServiceGrpc.JobServiceImplBase {
         final int[] progress = {0};
         final int increment = 100 / durationSeconds;
 
-        scheduler.scheduleAtFixedRate(() -> {
-            progress[0] += increment;
-            if (progress[0] >= 100) {
-                progress[0] = 100;
+        // We need a wrapper to hold the future so we can access it inside the lambda (or just look it up in the map)
+        
+        Runnable jobTask = new Runnable() {
+            @Override
+            public void run() {
+                progress[0] += increment;
+                if (progress[0] >= 100) {
+                    progress[0] = 100;
+                }
+
+                JobUpdate.Builder update = JobUpdate.newBuilder()
+                        .setJobId(jobId)
+                        .setTimestamp(System.currentTimeMillis());
+
+                if (progress[0] < 100) {
+                    update.setStatus("RUNNING")
+                          .setProgressPercent(progress[0])
+                          .setMessage("Processing... " + progress[0] + "%");
+                    
+                    // Send update
+                    try {
+                        responseObserver.onNext(update.build());
+                    } catch (Exception e) {
+                        logger.warning("Error sending update for job " + jobId + ": " + e.getMessage());
+                        cancelJob(jobId);
+                    }
+                } else {
+                    update.setStatus("COMPLETED")
+                          .setProgressPercent(100)
+                          .setMessage("Job finished successfully.");
+                    
+                    try {
+                        responseObserver.onNext(update.build());
+                        responseObserver.onCompleted();
+                    } catch (Exception e) {
+                        logger.warning("Error completing job " + jobId + ": " + e.getMessage());
+                    } finally {
+                        logger.info("Job completed: " + jobId);
+                        cancelJob(jobId);
+                    }
+                }
             }
+        };
 
-            JobUpdate.Builder update = JobUpdate.newBuilder()
-                    .setJobId(jobId)
-                    .setTimestamp(System.currentTimeMillis());
+        java.util.concurrent.ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(jobTask, 1, 1, TimeUnit.SECONDS);
+        activeJobs.put(jobId, future);
+    }
 
-            if (progress[0] < 100) {
-                update.setStatus("RUNNING")
-                      .setProgressPercent(progress[0])
-                      .setMessage("Processing... " + progress[0] + "%");
-            } else {
-                update.setStatus("COMPLETED")
-                      .setProgressPercent(100)
-                      .setMessage("Job finished successfully.");
-            }
-
-            responseObserver.onNext(update.build());
-
-            if (progress[0] >= 100) {
-                responseObserver.onCompleted();
-                logger.info("Job completed: " + jobId);
-                throw new RuntimeException("Stop scheduler"); // Hack to stop this task
-            }
-
-        }, 1, 1, TimeUnit.SECONDS);
+    private void cancelJob(String jobId) {
+        java.util.concurrent.ScheduledFuture<?> future = activeJobs.remove(jobId);
+        if (future != null) {
+            future.cancel(false);
+        }
     }
 
     @Override
