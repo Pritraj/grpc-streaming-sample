@@ -10,25 +10,24 @@
 // 	protoc              v4.25.3
 // source: job.proto
 
-
 /* eslint-disable */
 // @ts-nocheck
-
 
 import * as grpcWeb from 'grpc-web';
 
 import * as job_pb from './job_pb'; // proto import: "job.proto"
 
-
 export class JobServiceClient {
   client_: grpcWeb.AbstractClientBase;
   hostname_: string;
-  credentials_: null | { [index: string]: string; };
-  options_: null | { [index: string]: any; };
+  credentials_: null | { [index: string]: string };
+  options_: null | { [index: string]: any };
 
-  constructor (hostname: string,
-               credentials?: null | { [index: string]: string; },
-               options?: null | { [index: string]: any; }) {
+  constructor(
+    hostname: string,
+    credentials?: null | { [index: string]: string },
+    options?: null | { [index: string]: any }
+  ) {
     if (!options) options = {};
     if (!credentials) credentials = {};
     options['format'] = 'text';
@@ -52,13 +51,14 @@ export class JobServiceClient {
 
   startJob(
     request: job_pb.JobRequest,
-    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<job_pb.JobUpdate> {
+    metadata?: grpcWeb.Metadata
+  ): grpcWeb.ClientReadableStream<job_pb.JobUpdate> {
     return this.client_.serverStreaming(
-      this.hostname_ +
-        '/job.JobService/StartJob',
+      this.hostname_ + '/job.JobService/StartJob',
       request,
       metadata || {},
-      this.methodDescriptorStartJob);
+      this.methodDescriptorStartJob
+    );
   }
 
   methodDescriptorWatchJobs = new grpcWeb.MethodDescriptor(
@@ -74,14 +74,13 @@ export class JobServiceClient {
 
   watchJobs(
     request: job_pb.Empty,
-    metadata?: grpcWeb.Metadata): grpcWeb.ClientReadableStream<job_pb.JobUpdate> {
+    metadata?: grpcWeb.Metadata
+  ): grpcWeb.ClientReadableStream<job_pb.JobUpdate> {
     return this.client_.serverStreaming(
-      this.hostname_ +
-        '/job.JobService/WatchJobs',
+      this.hostname_ + '/job.JobService/WatchJobs',
       request,
       metadata || {},
-      this.methodDescriptorWatchJobs);
+      this.methodDescriptorWatchJobs
+    );
   }
-
 }
-

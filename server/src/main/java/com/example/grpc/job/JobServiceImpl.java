@@ -33,27 +33,25 @@ public class JobServiceImpl extends JobServiceGrpc.JobServiceImplBase {
                 .build());
 
         // Simulate progress
-        final int[] progress = {0};
-        final int increment = 100 / durationSeconds;
-
-        // We need a wrapper to hold the future so we can access it inside the lambda (or just look it up in the map)
+        final int[] step = {0};
         
         Runnable jobTask = new Runnable() {
             @Override
             public void run() {
-                progress[0] += increment;
-                if (progress[0] >= 100) {
-                    progress[0] = 100;
-                }
+                step[0]++;
+                int currentProgress = (int) ((double) step[0] / durationSeconds * 100);
+                
+                // Cap at 99% until explicitly completed by time, or 100 on last step
+                if (currentProgress > 100) currentProgress = 100;
 
                 JobUpdate.Builder update = JobUpdate.newBuilder()
                         .setJobId(jobId)
                         .setTimestamp(System.currentTimeMillis());
 
-                if (progress[0] < 100) {
+                if (step[0] < durationSeconds) {
                     update.setStatus("RUNNING")
-                          .setProgressPercent(progress[0])
-                          .setMessage("Processing... " + progress[0] + "%");
+                          .setProgressPercent(currentProgress)
+                          .setMessage("Processing... " + currentProgress + "%");
                     
                     // Send update
                     try {

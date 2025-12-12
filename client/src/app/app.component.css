@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 h1 {
@@ -21,6 +21,11 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+    background-color: #0069d9;
 }
 
 button:disabled {
@@ -28,60 +33,58 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.logs {
-  background: #f9f9f9;
-  padding: 20px;
+.job-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.job-card {
+  background: white;
+  padding: 15px;
   border-radius: 8px;
   border: 1px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.log-entry {
-  background: white;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 5px solid #ccc;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.log-entry.running {
-  border-left-color: #007bff;
-}
-
-.log-entry.completed {
-  border-left-color: #28a745;
-}
-
-.log-entry.failed {
-  border-left-color: #dc3545;
-}
-
-.header {
+.job-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
-  font-size: 0.9em;
-  color: #666;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+}
+
+.status-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
 }
 
 .progress-bar {
-  height: 6px;
+  height: 8px;
   background: #eee;
-  border-radius: 3px;
-  margin: 5px 0;
+  border-radius: 4px;
+  margin: 10px 0;
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
   background: #007bff;
-  transition: width 0.3s ease;
+  transition: width 0.5s ease;
 }
 
-.log-entry.completed .fill {
-  background: #28a745;
-}
-
-.message {
-  font-weight: bold;
+.job-meta {
+    font-size: 0.85em;
+    color: #6c757d;
+    text-align: right;
 }

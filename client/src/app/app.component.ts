@@ -1,4 +1,4 @@
-import { Component, signal, WritableSignal } from '@angular/core';
+import { Component, signal, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { JobServiceClient } from './proto/JobServiceClientPb';
@@ -23,54 +23,63 @@ interface JobLog {
 export class AppComponent {
   title = 'gRPC Job Monitor';
 
-  // Signals
-  jobLogs: WritableSignal<JobLog[]> = signal([]);
-  isStreaming = signal(false);
+  // Active jobs list (tracked by ID)
+  jobs = signal<JobLog[]>([]);
 
   // Client
   private client: JobServiceClient;
 
-  constructor() {
+  constructor(private ngZone: NgZone) {
     // Connect to Envoy
     this.client = new JobServiceClient('http://localhost:8080');
   }
 
-  startJob() {
-    console.log('Starting job...');
-    const request = new JobRequest();
-    request.setDescription('Sample Long Running Job');
-    request.setDurationSeconds(10); // 10 seconds
+  startSimulation() {
+    // Start 3 parallel jobs
+    for (let i = 1; i <= 3; i++) {
+        this.startSingleJob(i);
+    }
+  }
 
-    this.isStreaming.set(true);
+  private startSingleJob(index: number) {
+    const request = new JobRequest();
+    // Random duration between 300 (5m) and 1200 (20m) seconds.
+    const duration = Math.floor(Math.random() * (1200 - 300 + 1)) + 300; 
+    
+    request.setDescription(`Simulation Job #${index} (${(duration / 60).toFixed(1)} mins)`);
+    request.setDurationSeconds(duration);
 
     const stream = this.client.startJob(request, {});
 
     stream.on('data', (response: JobUpdate) => {
-      const log: JobLog = {
-        jobId: response.getJobId(),
-        status: response.getStatus(),
-        progress: response.getProgressPercent(),
-        message: response.getMessage(),
-        timestamp: response.getTimestamp(),
-      };
+        const jobId = response.getJobId();
+        const newUpdate: JobLog = {
+            jobId: jobId,
+            status: response.getStatus(),
+            progress: response.getProgressPercent(),
+            message: response.getMessage(),
+            timestamp: response.getTimestamp()
+        };
 
-      console.log('Received update:', log);
-
-      this.jobLogs.update((logs) => [log, ...logs]);
-    });
-
-    stream.on('status', (status: grpcWeb.Status) => {
-      console.log('Stream status:', status);
-    });
-
-    stream.on('end', () => {
-      console.log('Stream ended');
-      this.isStreaming.set(false);
+        this.ngZone.run(() => {
+            this.jobs.update(currentJobs => {
+                const existingIndex = currentJobs.findIndex(j => j.jobId === jobId);
+                if (existingIndex !== -1) {
+                    // Update existing job in place
+                    const updated = [...currentJobs];
+                    updated[existingIndex] = newUpdate;
+                    return updated;
+                } else {
+                    // Add new job
+                    return [...currentJobs, newUpdate];
+                }
+            });
+        });
     });
 
     stream.on('error', (err: grpcWeb.RpcError) => {
-      console.error('Stream error:', err);
-      this.isStreaming.set(false);
+        console.error('Stream error:', err);
     });
   }
 }
+

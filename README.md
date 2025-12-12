@@ -26,6 +26,15 @@ This project demonstrates a real-time job monitoring application using gRPC stre
 3. Open your browser to [http://localhost:4200](http://localhost:4200).
 4. Click "Start New Job" to see the real-time streaming updates from the Java backend.
 
+### Clean and Spin Up
+
+If you want to ensure a clean build (e.g. after code changes), use:
+
+```bash
+docker-compose down
+docker-compose up --build --force-recreate
+```
+
 ## Development
 
 ### Server
