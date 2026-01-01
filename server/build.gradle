@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
     id 'application'
     id 'com.google.protobuf' version '0.9.4'
 }
@@ -21,6 +22,9 @@ dependencies {
     implementation 'io.grpc:grpc-netty-shaded:1.60.0'
     implementation 'io.grpc:grpc-protobuf:1.60.0'
     implementation 'io.grpc:grpc-stub:1.60.0'
+    implementation 'io.grpc:grpc-kotlin-stub:1.4.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 
     // Logging
@@ -35,10 +39,14 @@ protobuf {
         grpc {
             artifact = 'io.grpc:protoc-gen-grpc-java:1.60.0'
         }
+        grpckt {
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.1:jdk8@jar"
+        }
     }
     generateProtoTasks {
         all()*.plugins {
             grpc {}
+            grpckt {}
         }
     }
 }
@@ -48,17 +56,20 @@ sourceSets {
         proto {
             srcDir '../proto'
         }
+        java {
+            srcDirs 'src/main/kotlin'
+        }
     }
 }
 
 application {
-    mainClass = 'com.example.grpc.job.JobServer'
+    mainClass = 'com.example.grpc.job.JobServerKt'
 }
 
 jar {
     manifest {
         attributes(
-            'Main-Class': 'com.example.grpc.job.JobServer'
+            'Main-Class': 'com.example.grpc.job.JobServerKt'
         )
     }
     from {

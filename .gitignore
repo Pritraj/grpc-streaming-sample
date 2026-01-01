@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+
+# IDE - IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# IDE - VSCode
+.vscode/
+
+# Gradle / Java / Kotlin (Server)
+.gradle/
+build/
+server/build/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Node / Angular (Client)
+node_modules/
+dist/
+client/dist/
+client/node_modules/
+.angular/
+connect.lock
+coverage/
+.env
+
+# Local Env
+.env.local
