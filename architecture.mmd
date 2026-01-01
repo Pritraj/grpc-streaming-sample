@@ -1,0 +1,27 @@
+graph BT
+    subgraph "User Machine"
+        Browser["Web Browser<br>(Angular App)<br>gRPC-Web Client"]
+    end
+
+    subgraph "Docker Desktop / Host"
+        subgraph "Docker Network: grpc-net"
+            Frontend["Frontend Container<br>(Nginx serving Angular)<br>Port: 80"]
+            
+            Envoy["<b>Envoy Proxy</b><br><i>Port: 8080</i><br>------------------<br><b>Filters:</b> gRPC-Web, CORS, Router<br><b>CORS:</b> Allow All Origins<br><b>Timeouts:</b> 0s (Unlimited for Streaming)<br><b>Cluster:</b> job_service (HTTP/2)<br><b>LB Policy:</b> ROUND_ROBIN"]
+            
+            Backend["Backend Service<br>(Java gRPC Server)<br>Port: 9090"]
+        end
+    end
+
+    Browser -- "Loads UI<br>(http://localhost:4200)" --> Frontend
+    Browser -- "gRPC-Web (HTTP/1.1)<br>(localhost:8080)" --> Envoy
+    Envoy -- "gRPC (HTTP/2)<br>backend:9090" --> Backend
+    Backend -. "gRPC Streams<br>(JobUpdates)" .-> Envoy
+    Envoy -. "gRPC-Web Streams" .-> Browser
+
+    %% Styling
+    classDef container fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black,rx:5,ry:5,align:left;
+    classDef browser fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:black,rx:5,ry:5;
+    
+    class Frontend,Envoy,Backend container;
+    class Browser browser;
